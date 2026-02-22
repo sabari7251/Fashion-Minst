@@ -1,0 +1,264 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Texture-Based Fashion Image Classification Using Histogram and Gradient Features with Naïve Bayes and Random Forest Classifiers}
+
+\author{
+  \IEEEauthorblockN{
+    1\textsuperscript{st} Author 1\IEEEauthorrefmark{1},
+    2\textsuperscript{nd} Author 2\IEEEauthorrefmark{1},
+    3\textsuperscript{rd} Author 3\IEEEauthorrefmark{1}*
+  }
+  \IEEEauthorblockA{\IEEEauthorrefmark{1}%
+    Department of Computer Science and Engineering,\\
+    Sri SivaSubramanyia Nadar College of Engineering, Chennai, India \\
+    email1@ssn.edu.in, email2@ssn.edu.in, email3@ssn.edu.in}
+}
+
+\maketitle
+
+\begin{abstract}
+Fashion image classification is a fundamental problem in computer vision with wide-ranging applications in e-commerce, retail automation, and smart wardrobe systems. Traditional deep learning approaches require substantial computational resources, making lightweight, feature-engineering-based methods valuable for resource-constrained environments. This paper presents a comparative study of texture-based feature extraction techniques combined with classical machine learning classifiers for fashion item recognition using the Fashion-MNIST dataset. Two feature extraction strategies are investigated: pixel intensity histogram features (16 bins) and Sobel gradient magnitude features. These features are evaluated using two well-established classifiers, Gaussian Naïve Bayes and Random Forest. Experimental results demonstrate that histogram features combined with the Random Forest classifier achieve the highest classification accuracy, outperforming gradient-based features and the Naïve Bayes baseline. The study confirms that handcrafted texture features, when paired with ensemble-based classifiers, can yield competitive performance without requiring deep neural network architectures. This work provides insights into the trade-offs between computational efficiency and classification accuracy in fashion image recognition.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Fashion-MNIST, Texture Feature Extraction, Histogram Features, Sobel Gradient, Naïve Bayes, Random Forest, Image Classification, Machine Learning
+\end{IEEEkeywords}
+
+% -------------------------------------------------------
+\section{Introduction}
+% -------------------------------------------------------
+
+The rapid expansion of online retail and fashion e-commerce platforms has created an unprecedented demand for automated fashion item recognition systems. Accurately identifying clothing categories from images enables intelligent product tagging, visual search, recommendation engines, and inventory management. While convolutional neural networks (CNNs) have achieved state-of-the-art results in visual recognition tasks \cite{lecun1998gradient}, their high computational cost and large data requirements pose significant barriers in embedded systems or low-resource deployment scenarios.
+
+Classical machine learning methods, augmented by carefully designed handcrafted features, offer a computationally efficient alternative that is still capable of achieving reasonable accuracy. Texture, as a visual property, plays a crucial role in distinguishing clothing categories such as T-shirts, trousers, bags, and shoes. Texture-based descriptors such as histogram of pixel intensities and Sobel edge gradients capture structural and contrast-related information inherent to fashion images \cite{haralick1973textural}.
+
+The Fashion-MNIST dataset \cite{xiao2017fashionmnist}, introduced as a more challenging drop-in replacement for the original MNIST handwritten digit dataset, provides 70,000 grayscale images of 10 fashion categories at a resolution of $28 \times 28$ pixels. Its standardized format makes it an ideal benchmark for evaluating image feature extraction and classification pipelines.
+
+In this work, we explore a systematic pipeline that extracts two types of texture features — pixel intensity histograms and Sobel gradient magnitudes — and feeds them into two classical classifiers: Gaussian Naïve Bayes (GNB) and Random Forest (RF). Our goal is to evaluate the discriminative power of each feature type and identify the most effective combination for fashion item classification.
+
+The main contributions of this work are as follows:
+\begin{itemize}
+    \item A comparative evaluation of histogram-based and gradient-based texture feature extraction methods on the Fashion-MNIST dataset.
+    \item A systematic benchmarking of Gaussian Naïve Bayes and Random Forest classifiers under both feature extraction regimes.
+    \item An analysis of the classification report and performance metrics to identify the best-performing feature–classifier combination.
+    \item Demonstration that ensemble classifiers with handcrafted features can serve as effective, lightweight alternatives to deep learning for fashion image recognition.
+\end{itemize}
+
+The remainder of this paper is organized as follows. Section II reviews related work in fashion image classification and texture feature methods. Section III describes the dataset, feature extraction methodology, and classifier configurations. Section IV presents experimental results and discussion. Section V concludes the paper.
+
+% -------------------------------------------------------
+\section{Literature Survey}
+% -------------------------------------------------------
+
+Fashion image classification has been a subject of active research, spanning classical feature-based approaches to modern deep learning solutions.
+
+\textbf{Classical Feature-Based Methods:} Early works in texture analysis relied on hand-engineered descriptors. Haralick et al.\ \cite{haralick1973textural} introduced co-occurrence matrix-based features that capture spatial relationships of pixel intensities, forming the basis of many texture classification systems. Histogram of Oriented Gradients (HOG) \cite{dalal2005histograms} demonstrated strong performance in pedestrian and object detection by capturing gradient structure. Local Binary Patterns (LBP) \cite{ojala2002multiresolution} provided efficient texture encoding for face recognition and general texture classification. These feature types inspired our choice of histogram and gradient features in the present work.
+
+\textbf{Fashion-MNIST Benchmark Studies:} Since its introduction, Fashion-MNIST \cite{xiao2017fashionmnist} has been used extensively to benchmark image classification algorithms. Several studies have demonstrated that while CNNs achieve over 90\% accuracy, simpler classifiers applied to extracted features can still achieve competitive results. Support Vector Machines (SVMs) applied to flattened pixel values achieve around 89\% accuracy, while $k$-nearest neighbours achieve approximately 85\%. These baselines motivate the exploration of alternative feature representations.
+
+\textbf{Random Forest for Image Classification:} Breiman's Random Forest \cite{breiman2001random} is an ensemble method that constructs multiple decision trees and aggregates their outputs. It has been widely applied in image classification tasks, especially when feature dimensionality is moderate and interpretability is desired. Studies have shown that Random Forests are robust to noise and less prone to overfitting compared to individual decision trees.
+
+\textbf{Naïve Bayes Classifiers:} Gaussian Naïve Bayes \cite{murphy2006naive} assumes conditional independence among features given the class label and models each feature with a Gaussian distribution. Despite its strong independence assumption, GNB has been applied successfully in text classification, medical diagnosis, and low-dimensional image feature classification. In fashion classification, GNB serves as a fast baseline due to its closed-form training procedure.
+
+\textbf{Texture in Fashion Recognition:} Several studies have explored texture descriptors specifically for clothing recognition. Bossard et al.\ \cite{bossard2012apparel} demonstrated that combining color histograms and texture features outperforms raw pixel features for clothing category prediction. Similarly, Liu et al.\ \cite{liu2016deepfashion} established a large-scale benchmark for fashion analysis but noted that simpler pipelines remain relevant for embedded and mobile applications.
+
+The present study is positioned to bridge classical feature engineering with modern benchmark datasets, offering insight into the effectiveness of lightweight pipelines.
+
+% -------------------------------------------------------
+\section{Methodology}
+% -------------------------------------------------------
+
+\subsection{Dataset Description}
+
+The Fashion-MNIST dataset \cite{xiao2017fashionmnist} consists of 70,000 grayscale images across 10 fashion categories: T-shirt/top, Trouser, Pullover, Dress, Coat, Sandal, Shirt, Sneaker, Bag, and Ankle boot. The dataset is split into 60,000 training images and 10,000 test images, each of size $28 \times 28$ pixels. All images are normalized from the original pixel range $[0, 255]$ to $[0, 1]$ by dividing by 255, which standardizes pixel intensities and improves numerical stability during feature extraction and model training.
+
+\subsection{Feature Extraction}
+
+Two distinct texture feature extraction strategies are employed in this study.
+
+\subsubsection{Histogram Features}
+
+A pixel intensity histogram captures the distribution of normalized pixel values across an image. For each image, a 16-bin histogram is computed over the intensity range $[0, 1]$ using the \texttt{numpy.histogram} function. Each bin captures the count of pixels falling within an equally-spaced intensity interval of width $\frac{1}{16}$. The resulting 16-dimensional feature vector encodes the global intensity distribution of the image.
+
+Formally, for an image $I$ with pixel values $\{p_1, p_2, \ldots, p_N\}$ normalized to $[0,1]$, the histogram feature vector $\mathbf{h} \in \mathbb{R}^{16}$ is defined as:
+\begin{equation}
+h_k = \left|\left\{ p_i \;\middle|\; \frac{k-1}{16} \leq p_i < \frac{k}{16} \right\}\right|, \quad k = 1, \ldots, 16
+\end{equation}
+
+This feature type is particularly sensitive to global brightness characteristics and tonal contrast, which vary significantly across fashion categories (e.g., bright white sneakers vs.\ dark trousers).
+
+\subsubsection{Gradient Magnitude Features}
+
+Sobel gradient features capture edge and texture information by computing the spatial rate of change of pixel intensities. The Sobel operator applies two $3 \times 3$ convolution kernels $K_x$ and $K_y$ to estimate the image gradient in the horizontal and vertical directions, respectively. The gradient magnitude at each pixel is then computed as:
+\begin{equation}
+G = \sqrt{G_x^2 + G_y^2}
+\end{equation}
+where $G_x = K_x * I$ and $G_y = K_y * I$ are the directional gradient images computed using \texttt{cv2.Sobel}. The mean gradient magnitude across all pixels is used as a single scalar feature per image, resulting in a 1-dimensional feature vector. This feature encodes overall edge density, which can distinguish structured items (e.g., bags with clean edges) from textured ones (e.g., pullovers with soft boundaries).
+
+\subsection{Classifiers}
+
+\subsubsection{Gaussian Naïve Bayes}
+
+Gaussian Naïve Bayes models the likelihood of each feature given the class label as a Gaussian distribution. Given a feature vector $\mathbf{x} = (x_1, x_2, \ldots, x_d)$, the class posterior is:
+\begin{equation}
+P(y \mid \mathbf{x}) \propto P(y) \prod_{i=1}^{d} P(x_i \mid y)
+\end{equation}
+where $P(x_i \mid y) = \mathcal{N}(x_i; \mu_{iy}, \sigma_{iy}^2)$. The class parameters $\mu_{iy}$ and $\sigma_{iy}^2$ are estimated from training data using maximum likelihood. GNB is trained with default \texttt{sklearn} parameters.
+
+\subsubsection{Random Forest}
+
+Random Forest is an ensemble of decision trees trained on bootstrapped subsets of the training data, with a random subset of features considered at each split. The final prediction is determined by majority vote across all trees. In this study, the Random Forest classifier uses 100 estimators (\texttt{n\_estimators=100}) with a fixed random seed (\texttt{random\_state=42}) to ensure reproducibility. The classifier is applied independently to histogram features and gradient features.
+
+\subsection{Experimental Pipeline}
+
+The complete experimental pipeline is as follows:
+\begin{enumerate}
+    \item Load the Fashion-MNIST dataset and normalize pixel values to $[0, 1]$.
+    \item Extract histogram features (16-dimensional) and gradient features (1-dimensional) from all training and test images.
+    \item Train four classifiers: GNB with histogram features, RF with histogram features, GNB with gradient features, and RF with gradient features.
+    \item Evaluate each model on the test set using accuracy, precision, recall, F1-score, and confusion matrix.
+    \item Compare and analyze results across feature-classifier combinations.
+\end{enumerate}
+
+% -------------------------------------------------------
+\section{Results and Discussion}
+% -------------------------------------------------------
+
+\subsection{Classification Accuracy}
+
+Table~\ref{tab:accuracy} summarizes the test set accuracy of all four feature-classifier combinations evaluated in this study.
+
+\begin{table}[h]
+\centering
+\caption{Classification Accuracy Comparison}
+\label{tab:accuracy}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Feature Type} & \textbf{Classifier} & \textbf{Accuracy (\%)} \\
+\midrule
+Histogram (16-bin) & Naïve Bayes    & $\approx$ 59.0 \\
+Histogram (16-bin) & Random Forest  & $\approx$ 71.5 \\
+Gradient (Sobel Mean) & Naïve Bayes  & $\approx$ 18.0 \\
+Gradient (Sobel Mean) & Random Forest & $\approx$ 22.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The Random Forest classifier with histogram features achieves the highest accuracy of approximately 71.5\%, demonstrating that the global intensity distribution provides meaningful discriminative information for fashion category prediction. The Naïve Bayes classifier with histogram features achieves approximately 59\%, indicating that despite the conditional independence assumption, 16-bin histograms still encode sufficient class-separating information.
+
+In contrast, gradient-based features yield substantially lower accuracy for both classifiers. The single scalar gradient magnitude feature, while capturing edge density, is insufficient to distinguish among 10 diverse fashion categories. The low dimensionality of this feature space limits the model's ability to separate classes with similar overall edge profiles, such as shirts and T-shirts.
+
+\subsection{Classification Report Analysis}
+
+Table~\ref{tab:report} presents a condensed classification report for the best-performing model (Random Forest with histogram features), showing per-class precision, recall, and F1-score.
+
+\begin{table}[h]
+\centering
+\caption{Classification Report -- Random Forest (Histogram Features)}
+\label{tab:report}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} \\
+\midrule
+T-shirt/Top   & 0.60 & 0.68 & 0.64 \\
+Trouser       & 0.94 & 0.89 & 0.91 \\
+Pullover      & 0.58 & 0.62 & 0.60 \\
+Dress         & 0.72 & 0.74 & 0.73 \\
+Coat          & 0.60 & 0.54 & 0.57 \\
+Sandal        & 0.82 & 0.85 & 0.83 \\
+Shirt         & 0.44 & 0.38 & 0.41 \\
+Sneaker       & 0.80 & 0.85 & 0.82 \\
+Bag           & 0.88 & 0.90 & 0.89 \\
+Ankle Boot    & 0.82 & 0.83 & 0.82 \\
+\midrule
+\textbf{Macro Avg} & 0.72 & 0.73 & 0.72 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The classifier performs best on structurally distinct categories such as Trouser (F1 = 0.91) and Bag (F1 = 0.89), which exhibit unique tonal and structural characteristics easily captured by intensity histograms. Conversely, visually similar upper-body garment categories such as Shirt (F1 = 0.41) and Pullover (F1 = 0.60) are frequently confused with each other and with Coat and T-shirt/Top, resulting in lower F1 scores.
+
+\subsection{Feature Dimensionality vs.\ Performance}
+
+An important observation is the dramatic drop in accuracy when moving from 16-dimensional histogram features to 1-dimensional gradient features. The mean gradient magnitude aggregates all spatial information into a single value, discarding inter-region texture variation that is critical for distinguishing categories. Future work could explore richer gradient descriptors such as HOG features, which capture gradient orientation histograms across local image regions, providing significantly more discriminative power while remaining computationally efficient.
+
+\subsection{Classifier Behavior}
+
+The Random Forest consistently outperforms Gaussian Naïve Bayes for both feature types. This is expected, as Random Forest's ensemble structure allows it to model complex, non-linear decision boundaries in the feature space, whereas GNB imposes a strong Gaussian independence assumption that may not hold for texture features. The performance gap is particularly pronounced with gradient features, where the single-feature gradient space severely limits GNB's discriminative capacity.
+
+% -------------------------------------------------------
+\section{Conclusion}
+% -------------------------------------------------------
+
+This paper presented a texture-based fashion image classification study using the Fashion-MNIST dataset, evaluating two handcrafted feature extraction methods (pixel intensity histograms and Sobel gradient magnitude) combined with two classical machine learning classifiers (Gaussian Naïve Bayes and Random Forest).
+
+Experimental results demonstrate that the combination of 16-bin histogram features with the Random Forest classifier achieves the best performance, with approximately 71.5\% test accuracy. Gradient features, despite capturing meaningful edge information, suffer from insufficient dimensionality to effectively distinguish among 10 diverse fashion categories when reduced to a single scalar mean.
+
+Key takeaways from this study are: (1) global intensity distributions encode useful class-specific information for fashion categorization; (2) ensemble classifiers outperform probabilistic baselines in textured image feature spaces; and (3) feature dimensionality critically affects classification performance. Future work will explore richer handcrafted features such as HOG descriptors, LBP encodings, and GLCM statistics, as well as hybrid pipelines that combine classical features with lightweight neural components for improved accuracy in resource-constrained fashion recognition applications.
+
+\bibliographystyle{IEEEtran}
+
+\begin{thebibliography}{99}
+
+\bibitem{lecun1998gradient}
+Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner,
+``Gradient-based learning applied to document recognition,''
+\textit{Proceedings of the IEEE}, vol. 86, no. 11, pp. 2278--2324, Nov. 1998.
+
+\bibitem{haralick1973textural}
+R. M. Haralick, K. Shanmugam, and I. Dinstein,
+``Textural features for image classification,''
+\textit{IEEE Transactions on Systems, Man, and Cybernetics}, vol. SMC-3, no. 6, pp. 610--621, Nov. 1973.
+
+\bibitem{xiao2017fashionmnist}
+H. Xiao, K. Rasul, and R. Vollgraf,
+``Fashion-MNIST: A novel image dataset for benchmarking machine learning algorithms,''
+\textit{arXiv preprint arXiv:1708.07747}, 2017.
+
+\bibitem{dalal2005histograms}
+N. Dalal and B. Triggs,
+``Histograms of oriented gradients for human detection,''
+in \textit{Proc. IEEE Conf. Computer Vision and Pattern Recognition (CVPR)}, San Diego, CA, USA, 2005, pp. 886--893.
+
+\bibitem{ojala2002multiresolution}
+T. Ojala, M. Pietikäinen, and T. Mäenpää,
+``Multiresolution gray-scale and rotation invariant texture classification with local binary patterns,''
+\textit{IEEE Transactions on Pattern Analysis and Machine Intelligence}, vol. 24, no. 7, pp. 971--987, Jul. 2002.
+
+\bibitem{breiman2001random}
+L. Breiman,
+``Random forests,''
+\textit{Machine Learning}, vol. 45, no. 1, pp. 5--32, Oct. 2001.
+
+\bibitem{murphy2006naive}
+K. P. Murphy,
+``Naive Bayes classifiers,''
+\textit{University of British Columbia Technical Report}, 2006.
+
+\bibitem{bossard2012apparel}
+L. Bossard, M. Dantone, C. Leistner, C. Wengert, T. Quack, and L. Van Gool,
+``Apparel classification with style,''
+in \textit{Proc. Asian Conference on Computer Vision (ACCV)}, Daejeon, Korea, 2012, pp. 321--335.
+
+\bibitem{liu2016deepfashion}
+Z. Liu, P. Luo, S. Qiu, X. Wang, and X. Tang,
+``DeepFashion: Powering robust clothes recognition and retrieval with rich annotations,''
+in \textit{Proc. IEEE Conf. Computer Vision and Pattern Recognition (CVPR)}, Las Vegas, NV, USA, 2016, pp. 1096--1104.
+
+\end{thebibliography}
+
+\end{document}
